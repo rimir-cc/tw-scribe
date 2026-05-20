@@ -86,39 +86,53 @@ describe("rimir/scribe — <$scribe> widget", function() {
 		var widgetNode = wiki.makeTranscludeWidget("Render", {parseAsInline: false});
 		var container = $tw.fakeDocument.createElement("div");
 		widgetNode.render(container, null);
-		return {container: container, widget: widgetNode};
+		return {
+			container: container,
+			widget: widgetNode,
+			// In a browser the wiki's change event would trigger refresh; the jasmine
+			// harness has no such listener, so the test helper fires it manually.
+			notifyChanged: function(stateTitle) {
+				var changed = {};
+				changed[stateTitle] = true;
+				widgetNode.refresh(changed);
+			}
+		};
 	}
 
 	it("plain text whole-field round-trip", function() {
 		wiki.addTiddler({title: "T", greeting: "hi"});
-		render('<$scribe tiddler="T" field="greeting" state="$:/state/s"/>');
+		var r = render('<$scribe tiddler="T" field="greeting" state="$:/state/s"/>');
 		expect(wiki.getTiddlerText("$:/state/s")).toBe("hi");
 		wiki.setText("$:/state/s", "text", null, "bye");
+		r.notifyChanged("$:/state/s");
 		expect(wiki.getTiddler("T").fields["greeting"]).toBe("bye");
 	});
 
 	it("sub-path JSON syncs scalar property", function() {
 		wiki.addTiddler({title: "T", "k.fields": '[{"key":"abbrev","caption":"Old"}]'});
-		render('<$scribe tiddler="T" field="k.fields" path="0,caption" state="$:/state/c"/>');
+		var r = render('<$scribe tiddler="T" field="k.fields" path="0,caption" state="$:/state/c"/>');
 		expect(wiki.getTiddlerText("$:/state/c")).toBe("Old");
 		wiki.setText("$:/state/c", "text", null, "New");
+		r.notifyChanged("$:/state/c");
 		var parsed = JSON.parse(wiki.getTiddler("T").fields["k.fields"]);
 		expect(parsed[0].caption).toBe("New");
 	});
 
 	it("sub-path with string-array type", function() {
 		wiki.addTiddler({title: "T", "k.fields": '[{"key":"x","constraints":["a","b"]}]'});
-		render('<$scribe tiddler="T" field="k.fields" path="0,constraints" type="application/x-string-array" state="$:/state/a"/>');
+		var r = render('<$scribe tiddler="T" field="k.fields" path="0,constraints" type="application/x-string-array" state="$:/state/a"/>');
 		expect(wiki.getTiddlerText("$:/state/a")).toBe("a b");
 		wiki.setText("$:/state/a", "text", null, "x y z");
+		r.notifyChanged("$:/state/a");
 		var parsed = JSON.parse(wiki.getTiddler("T").fields["k.fields"]);
 		expect(parsed[0].constraints).toEqual(["x", "y", "z"]);
 	});
 
 	it("clearing state deletes the sub-path key (object)", function() {
 		wiki.addTiddler({title: "T", "k.fields": '[{"key":"x","caption":"Old"}]'});
-		render('<$scribe tiddler="T" field="k.fields" path="0,caption" state="$:/state/c"/>');
+		var r = render('<$scribe tiddler="T" field="k.fields" path="0,caption" state="$:/state/c"/>');
 		wiki.setText("$:/state/c", "text", null, "");
+		r.notifyChanged("$:/state/c");
 		var parsed = JSON.parse(wiki.getTiddler("T").fields["k.fields"]);
 		expect(parsed[0].hasOwnProperty("caption")).toBe(false);
 		expect(parsed[0].key).toBe("x");
