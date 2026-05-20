@@ -1,0 +1,11 @@
+{
+    "description": "Test edition for scribe",
+    "plugins": [
+        "tiddlywiki/jasmine",
+        "rimir/scribe"
+    ],
+    "themes": [
+        "tiddlywiki/vanilla",
+        "tiddlywiki/snowwhite"
+    ]
+}
