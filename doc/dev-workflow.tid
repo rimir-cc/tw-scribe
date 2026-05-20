@@ -1,0 +1,54 @@
+rdt.order: 3
+rdt.plugin-key: scribe
+rdt.plugin-name: scribe
+rdt.plugin-subtitle: Bidirectional sync between a tiddler field (or JSON sub-path) and a state tiddler
+rdt.section: Dev Workflow
+title: $:/plugins/rimir/scribe/doc/dev-workflow
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Plugin files
+
+|!File |!Role |
+|`modules/widgets/scribe.js` |The `<$scribe>` widget itself |
+|`modules/scribetypes/plain.js` |`text/plain` handler |
+|`modules/scribetypes/json.js` |`application/json` handler |
+|`modules/scribetypes/string-array.js` |`application/x-string-array` handler |
+|`test/scribetypes.js` |Jasmine specs for handlers + the widget |
+
+!! Restart rules
+
+|!Change |!Restart? |
+|Edit any `.js` (widget or handler) |Yes — JS modules require server restart |
+|Add a new scribetype handler |Yes |
+|Edit doc tiddlers / readme |No |
+
+!! Adding a new type handler
+
+Drop a new file under `modules/scribetypes/<mime>.js` exporting `name`, `fromField`, `toField`. After restart, it's discoverable by `<$scribe type="<your-mime>">`.
+
+Example: a comma-separated-list handler
+
+```js
+exports.name = "application/x-csv-row";
+exports.fromField = function(value) {
+  if (!value) return "";
+  return Array.isArray(value) ? value.join(", ") : String(value);
+};
+exports.toField = function(text) {
+  return text ? text.split(/\s*,\s*/) : [];
+};
+```
+
+!! Running tests
+
+```
+bin/tw test scribe
+```
+
+Tests cover each handler's fromField/toField and several `<$scribe>` widget scenarios (whole-field round-trip, sub-path scalar, sub-path string-array, clear-deletes-key, unknown-type fallback).
+
+</$fill>
+</$transclude>

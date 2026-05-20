@@ -1,0 +1,48 @@
+rdt.order: 7
+rdt.plugin-key: scribe
+rdt.plugin-name: scribe
+rdt.plugin-subtitle: Bidirectional sync between a tiddler field (or JSON sub-path) and a state tiddler
+rdt.section: TW Internals
+title: $:/plugins/rimir/scribe/doc/tw-internals
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Module discovery
+
+Type handlers are discovered at widget-instantiation time via:
+
+```js
+$tw.modules.getModulesByTypeAsHashmap("scribetype")
+```
+
+The returned hashmap is keyed by `exports.name` — same convention TW core uses for `tiddlerfield`, `filteroperator`, etc.
+
+!! Refresh semantics
+
+`Widget.refresh(changedTiddlers)` is called by TW's reactivity system whenever any tiddler in `changedTiddlers` is one we depend on. We watch:
+
+* The state tiddler — change here means the user (or another widget) edited the input
+* The target tiddler — change here means an external source updated the field
+
+We do NOT call `refreshSelf()` for state/target changes; we only re-prep state or write field, then call `refreshChildren()`. This keeps the input widget mounted (no focus loss).
+
+!! Avoiding write loops
+
+`prepState()` does a `deepEqual()` comparison before writing the state, and `writeFromState()` doesn't re-trigger `prepState()` for the same value (the `lastValue` cache). Together these break the potential A→B→A→B loop where writing one side would re-trigger writing the other.
+
+!! Path-walking JSON
+
+`readCurrentValue()` does `JSON.parse(fieldText)` then walks the path array, indexing strings into either `Object` keys or `Array` positions. Numeric strings are valid array indices in JS, so `obj["0"]` works the same as `obj[0]`.
+
+`writeFromState()` walks the same path on a freshly-parsed copy, creating intermediate `{}` or `[]` containers as needed (chooses array if the next path segment is purely digits). This means you can write to a brand-new deep sub-path without pre-creating parents.
+
+!! Empty-state means "delete" (the asymmetric case)
+
+For an OBJECT parent, `delete parent[key]` removes the key entirely.
+
+For an ARRAY parent, we set `parent[idx] = ""` rather than `splice()` because shifting array indices would invalidate any other scribes pointing at later positions in the same array. This is a tradeoff: it preserves callers but leaves an empty-string slot. For most use cases (the kind plugin's per-cell editing) this is fine — the property goes from "set to something" to "empty string", which existing readers treat as missing.
+
+</$fill>
+</$transclude>

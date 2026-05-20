@@ -1,0 +1,45 @@
+rdt.hub-category: ui-framework
+rdt.hub-category-name: UI Framework & Domain Model
+rdt.hub-order: 5
+rdt.order: 1
+rdt.plugin-key: scribe
+rdt.plugin-name: scribe
+rdt.plugin-subtitle: Bidirectional sync between a tiddler field (or JSON sub-path) and a state tiddler
+rdt.section: Overview
+title: $:/plugins/rimir/scribe/doc/overview
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! What it does
+
+The `<$scribe>` widget wraps input widgets and keeps their backing state in sync with a target field. Input widgets bind to a state tiddler exposed via the `<<state>>` variable; the scribe handles the round-trip in both directions, optionally for a nested sub-path inside a JSON-encoded field.
+
+!! Features
+
+* ''`<$scribe>` widget'' — `tiddler` / `field` / `path` (optional, for sub-path) / `type` / `state` (optional)
+* ''Pluggable type handlers'' — `module-type: scribetype` modules implementing `fromField(value)` and `toField(text)`
+* ''Three handlers ship'' — `text/plain`, `application/json`, `application/x-string-array`
+* ''Sub-path syncing inside a JSON field'' — `path="0,caption"` syncs `kind.fields[0].caption`
+* ''Empty-state semantics'' — clearing the state deletes the sub-path key (or empties the whole field), so input widgets can "un-set" a property cleanly
+
+!! Schema model
+
+* ''Target tiddler'' — has a field whose value is plain text (text/plain) or a JSON-encoded string (json / string-array)
+* ''State tiddler'' — auto-managed at `$:/temp/rimir/scribe/<field>/<path|_>/<target>` unless overridden via `state=`. Holds the human-editable form of the value in its `text` field.
+
+!! Quick start
+
+```
+<$scribe tiddler="Task1" field="kind.fields" path="0,caption" type="text/plain">
+  <$edit-text tiddler=<<state>> field="text" tag="input"/>
+</$scribe>
+```
+
+!! Attribution
+
+Pattern inspired by Flibbles' [ext[FieldTranscriberWidget|https://github.com/flibbles/tw5-graph]]; this is an independent reimplementation that adds sub-path support inside JSON-encoded fields and the `application/x-string-array` type handler.
+
+</$fill>
+</$transclude>

@@ -1,0 +1,14 @@
+{
+    "title": "$:/plugins/rimir/scribe",
+    "description": "Bidirectional sync between a tiddler field (or sub-path inside a JSON-encoded field) and a state tiddler — pluggable type handlers",
+    "name": "scribe",
+    "author": "rimir",
+    "version": "0.1.0",
+    "core-version": ">=5.4.0",
+    "source": "https://github.com/rimir-cc/tw-scribe",
+    "plugin-type": "plugin",
+    "list": "readme documentation changelog license",
+    "soft-dependents": [
+        "$:/plugins/rimir/doc-template"
+    ]
+}

@@ -1,0 +1,64 @@
+rdt.order: 2
+rdt.plugin-key: scribe
+rdt.plugin-name: scribe
+rdt.plugin-subtitle: Bidirectional sync between a tiddler field (or JSON sub-path) and a state tiddler
+rdt.section: Architecture
+title: $:/plugins/rimir/scribe/doc/architecture
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Sync model
+
+The widget runs in two phases:
+
+# ''Mount / prep'' — `execute()` resolves the configured target, field, path, type and state-tiddler. Calls `prepState()` which reads the current value (via `readCurrentValue()`), runs `transcriber.fromField(value)`, and writes the result to the state's `text` field.
+# ''Refresh''  — `refresh()` watches both directions:
+#* If the state tiddler changed: `transcriber.toField(state.text)` produces the new value; `writeFromState()` writes it back to the target field (whole-field mode) or sets it at the JSON sub-path (path mode).
+#* If the target tiddler changed externally: re-runs `prepState()` to reflect the new value in the state.
+
+`prepState()` short-circuits with `deepEqual()` if the value hasn't actually changed — important to avoid update loops between state and field.
+
+!! Whole-field vs sub-path mode
+
+|!Mode |!`path` attr |!Field stores |!Value type seen by handler |
+|whole-field |omitted |result of `toField()`, serialised: string as-is, objects via `JSON.stringify` |raw field text |
+|sub-path |`"0,caption"` etc. |full JSON of the field, with the sub-path mutated |parsed value at that path |
+
+!! Type handler interface
+
+A type handler is a module with `module-type: scribetype` and `exports.name = "<mime-or-x-name>"`:
+
+```js
+exports.fromField = function(value) {
+  // value: whatever is at the field / sub-path (string, number, array, object)
+  // returns: human-readable string for the state body
+};
+exports.toField = function(text) {
+  // text: state body
+  // returns: value to write back (string, array, object, or undefined to clear/delete)
+};
+```
+
+Built-in handlers:
+* `text/plain` — both directions pass-through; coerces non-string values to String
+* `application/json` — pretty-prints on read (using `$tw.config.preferences.jsonSpaces`), parses on write; falls through to raw string when not valid JSON; empty text → `undefined` (= delete)
+* `application/x-string-array` — `[a,b,c]` ↔ `"a b c"`; empty text → `[]` (= delete in sub-path mode)
+
+!! State tiddler default path
+
+`$:/temp/rimir/scribe/<encoded-field>/<encoded-path-or-underscore>/<target-tiddler>`
+
+The `_` placeholder is used when no `path` is set, so whole-field and sub-path states for the same field don't collide.
+
+!! Empty-state behavior
+
+When `toField()` returns `undefined` / `null` / `""` (or `[]` for the array handler), the writer treats it as "delete this":
+
+* Whole-field mode: field set to empty string
+* Sub-path mode on an OBJECT parent: the leaf key is `delete`d from the parent
+* Sub-path mode on an ARRAY parent: the indexed slot is set to `""` (we deliberately don't `splice()` because that would shift indices and invalidate any caller currently pointing at later elements)
+
+</$fill>
+</$transclude>

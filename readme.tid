@@ -1,0 +1,31 @@
+title: $:/plugins/rimir/scribe/readme
+type: text/vnd.tiddlywiki
+
+! scribe
+
+Bidirectional sync between a tiddler field (or sub-path inside a JSON-encoded field) and a state tiddler. Wraps input widgets so they can edit nested values inside a JSON field as if they were plain DataTiddler indexes.
+
+!! Key features
+
+* ''Bidirectional sync'' — state-tiddler ↔ target field, re-prepared on external changes
+* ''Sub-path support'' — sync a value at <code>path="0,caption"</code> inside the JSON-encoded field, not just whole fields
+* ''Pluggable type handlers'' via <code>module-type: scribetype</code> modules
+* ''Three handlers ship'' — <code>text/plain</code>, <code>application/json</code>, <code>application/x-string-array</code>
+* ''Empty-state = delete'' — clearing the state removes the sub-path key, useful for "un-set this property" semantics
+* ''Zero plugin dependencies''
+
+!! Prerequisites
+
+No external prerequisites. Optional: <code>$:/plugins/rimir/doc-template</code> for the branded documentation hub.
+
+!! Quick start
+
+```
+<$scribe tiddler="Task1" field="kind.fields" path="0,caption" type="text/plain">
+  <$edit-text tiddler=<<state>> field="text" tag="input"/>
+</$scribe>
+```
+
+!! Attribution
+
+The bidirectional sync pattern was inspired by Flibbles' <code>FieldTranscriberWidget</code> in [ext[tw5-graph|https://github.com/flibbles/tw5-graph]]. This is an independent reimplementation with sub-path support added.

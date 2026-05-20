@@ -1,0 +1,37 @@
+rdt.order: 5
+rdt.plugin-key: scribe
+rdt.plugin-name: scribe
+rdt.plugin-subtitle: Bidirectional sync between a tiddler field (or JSON sub-path) and a state tiddler
+rdt.section: FAQ
+title: $:/plugins/rimir/scribe/doc/faq
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Q: Why not just use Flibbles' `FieldTranscriberWidget` directly?
+
+Their widget only syncs WHOLE FIELDS. For editing one element of a JSON array (e.g. `kind.fields[0].caption`) you need sub-path support, which their widget doesn't have. Beyond that, the tw5-graph repo has no LICENSE file shipped — borrowing patterns is fine; copying code isn't. So this is an independent reimplementation that adds sub-path support.
+
+!! Q: What's the state-tiddler's content type?
+
+Whatever the `type` attribute says. Input widgets that respect TW's standard `tiddler=` / `field=` / `index=` attributes work normally. Editing the state via UI WILL fire the widget's refresh and write back to the target.
+
+!! Q: Why does clearing my input delete the property instead of setting it to empty string?
+
+That's the design intent for sub-path object-mode: empty input usually means "I want to un-set this". If you need a literal empty-string value at a sub-path, write it via `<$action-setfield>` directly with a JSON value, or use the `application/json` handler with content `""`.
+
+!! Q: Does it work with multi-keystroke debouncing?
+
+No — every state change triggers a write. For typeahead-style inputs that fire on each keystroke, the field will be rewritten on each character. Acceptable for typical UIs; if you need to debounce, do it at the input layer with TW's `inputAcceptActions` pattern.
+
+!! Q: What happens if the JSON in the field is malformed?
+
+`readCurrentValue()` returns `undefined` for that sub-path; state body becomes empty. Writing back parses the field fresh (defaulting to `{}` on parse error) so it can self-heal from any sub-path edit. The first write will replace the malformed JSON with a clean object containing just the edited sub-path.
+
+!! Q: Can I sync arrays-of-objects sub-paths?
+
+Yes. `path="0,sub,1,name"` walks `field[0].sub[1].name`. The widget auto-creates intermediate objects/arrays at write time based on whether the next path segment is numeric.
+
+</$fill>
+</$transclude>

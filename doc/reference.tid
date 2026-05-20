@@ -1,0 +1,46 @@
+rdt.order: 6
+rdt.plugin-key: scribe
+rdt.plugin-name: scribe
+rdt.plugin-subtitle: Bidirectional sync between a tiddler field (or JSON sub-path) and a state tiddler
+rdt.section: Reference
+title: $:/plugins/rimir/scribe/doc/reference
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! `<$scribe>` widget attributes
+
+|!Attribute |!Default |!Description |
+|`tiddler` |`<<currentTiddler>>` |Target tiddler whose field is synced |
+|`field` |`text` |Target field name |
+|`path` |(none) |Comma-separated path INSIDE the JSON-encoded field. E.g. `0,caption` walks `field[0].caption`. Omit for whole-field mode |
+|`type` |`text/plain` |Name of the `scribetype` handler (unknown values fall back to `text/plain`) |
+|`state` |auto-computed |Explicit state-tiddler title. Default: `$:/temp/rimir/scribe/<encoded-field>/<encoded-path-or-underscore>/<target>` |
+
+!! Variable set inside content
+
+|!Variable |!Value |
+|`state` |Resolved state-tiddler title — bind input widgets to this via `tiddler=<<state>> field="text"` |
+
+!! Built-in `scribetype` handlers
+
+|!Name |!fromField (read) |!toField (write) |
+|`text/plain` |Coerces to String; undefined/null → "" |Identity |
+|`application/json` |Pretty-prints (parses then `JSON.stringify(_, null, jsonSpaces)`); falls through to raw string on parse error |Parses with `JSON.parse`; returns undefined for empty text |
+|`application/x-string-array` |Joins arrays with single space; parses JSON-array strings; returns raw string for non-arrays; empty for undefined |Splits on `\s+`; returns `[]` for empty text |
+
+!! Adding a new handler
+
+Create a JS module under `<your-plugin>/modules/scribetypes/<name>.js`:
+
+```js
+exports.name = "<mime-or-x-name>";
+exports.fromField = function(value) { ... };
+exports.toField = function(text) { ... };
+```
+
+After server restart, the new handler is discoverable by `<$scribe type="<name>">`.
+
+</$fill>
+</$transclude>

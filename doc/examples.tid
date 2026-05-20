@@ -1,0 +1,59 @@
+rdt.order: 4
+rdt.plugin-key: scribe
+rdt.plugin-name: scribe
+rdt.plugin-subtitle: Bidirectional sync between a tiddler field (or JSON sub-path) and a state tiddler
+rdt.section: Examples
+title: $:/plugins/rimir/scribe/doc/examples
+type: text/vnd.tiddlywiki
+
+<$transclude $tiddler="$:/plugins/rimir/doc-template/templates/page">
+<$fill $name="body">
+
+!! Whole-field text edit
+
+```
+<$scribe tiddler="MyNote" field="caption">
+  <$edit-text tiddler=<<state>> field="text" tag="input"/>
+</$scribe>
+```
+
+Typing into the input rewrites `MyNote.caption`. Programmatic changes to `caption` (e.g. another widget setting the field) push the new value back into the input.
+
+!! Pretty-edit a JSON-encoded field
+
+```
+<$scribe tiddler="Config" field="profile" type="application/json">
+  <$edit-text tiddler=<<state>> field="text" tag="textarea" class="tc-edit-texteditor"/>
+</$scribe>
+```
+
+The textarea shows pretty-printed JSON. On every keystroke it parses and writes back the compact JSON to `Config.profile`. Invalid JSON falls through unchanged (so it isn't destroyed while the user is mid-typo).
+
+!! Sub-path scalar inside JSON array
+
+This is the pattern the `rimir/kind` plugin's type-builder uses for per-cell editing of field-definitions:
+
+```
+<$scribe tiddler=<<type-tid>> field="kind.fields" path=`$(f-idx)$,caption`>
+  <$edit-text tiddler=<<state>> field="text" tag="input"/>
+</$scribe>
+```
+
+The `path` uses backtick-template substitution to interpolate the field index. Editing the input writes back to `kind.fields[<f-idx>].caption`.
+
+!! Sub-path string-array
+
+```
+<$scribe tiddler=<<type-tid>> field="kind.fields" path=`$(f-idx)$,constraints` type="application/x-string-array">
+  <$edit-text tiddler=<<state>> field="text" tag="input" placeholder="required min:3 unique"/>
+</$scribe>
+```
+
+State holds a space-separated string. Each keystroke writes a JSON array of trimmed words back to `kind.fields[<f-idx>].constraints`.
+
+!! Cleanly un-set a property
+
+Clearing the input in either of the sub-path examples above deletes the property entirely from the field def (when the parent is an object). The field-def object survives; just the cleared property is removed.
+
+</$fill>
+</$transclude>
