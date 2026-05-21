@@ -20,7 +20,7 @@ The `<$scribe>` widget wraps input widgets and keeps their backing state in sync
 
 * ''`<$scribe>` widget'' — `tiddler` / `field` / `path` (optional, for sub-path) / `type` / `state` (optional)
 * ''Pluggable type handlers'' — `module-type: scribetype` modules implementing `fromField(value)` and `toField(text)`
-* ''Three handlers ship'' — `text/plain`, `application/json`, `application/x-string-array`
+* ''Five handlers ship'' — `text/plain`, `application/json`, `application/x-string-array`, `application/x-tw-date`, `application/x-tw-datetime`
 * ''Sub-path syncing inside a JSON field'' — `path="0,caption"` syncs `kind.fields[0].caption`
 * ''Empty-state semantics'' — clearing the state deletes the sub-path key (or empties the whole field), so input widgets can "un-set" a property cleanly
 

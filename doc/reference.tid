@@ -29,6 +29,28 @@ type: text/vnd.tiddlywiki
 |`text/plain` |Coerces to String; undefined/null → "" |Identity |
 |`application/json` |Pretty-prints (parses then `JSON.stringify(_, null, jsonSpaces)`); falls through to raw string on parse error |Parses with `JSON.parse`; returns undefined for empty text |
 |`application/x-string-array` |Joins arrays with single space; parses JSON-array strings; returns raw string for non-arrays; empty for undefined |Splits on `\s+`; returns `[]` for empty text |
+|`application/x-tw-date` |TW UTC date string → `YYYY-MM-DD` (local); empty/unparseable pass through |Smart parser → TW UTC date string (storage-format `YYYYMMDDHHmmsssss`); empty text → undefined; bad input throws |
+|`application/x-tw-datetime` |TW UTC date string → `YYYY-MM-DD HH:mm` (local) |Same parser plus optional ` HH:mm` suffix; bare `HH:mm` = today at that time |
+
+!! Smart date-parser input shapes
+
+Used by `application/x-tw-date` and `application/x-tw-datetime`:
+
+|!Input |!Result |
+|`YYYY-MM-DD` |ISO absolute date |
+|`DD.MM.YYYY` |German absolute date |
+|`today` / `t` |Today at 00:00 local |
+|`tomorrow` |Today + 1 day |
+|`yesterday` |Today − 1 day |
+|`+N` / `-N` |Today ± N days |
+|`+Nd` / `-Nd` |Same — days suffix optional |
+|`+Nw` / `-Nw` |Today ± N weeks |
+|`+Nm` / `-Nm` |Today ± N months (day clamps to last-of-month) |
+|`+Ny` / `-Ny` |Today ± N years |
+
+For `application/x-tw-datetime`, append ` HH:mm` to any of the above, or pass a bare `HH:mm` for today-at-time. Missing time component defaults to `00:00`.
+
+Storage format remains TW's UTC `YYYYMMDDHHmmsssss` — round-trip via these scribetypes is lossless aside from sub-minute precision in the datetime parser.
 
 !! Adding a new handler
 

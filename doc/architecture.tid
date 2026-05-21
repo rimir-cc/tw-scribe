@@ -45,6 +45,8 @@ Built-in handlers:
 * `text/plain` — both directions pass-through; coerces non-string values to String
 * `application/json` — pretty-prints on read (using `$tw.config.preferences.jsonSpaces`), parses on write; falls through to raw string when not valid JSON; empty text → `undefined` (= delete)
 * `application/x-string-array` — `[a,b,c]` ↔ `"a b c"`; empty text → `[]` (= delete in sub-path mode)
+* `application/x-tw-date` — TW UTC date string ↔ local `YYYY-MM-DD`; smart parser accepts ISO, German `DD.MM.YYYY`, shortcuts (`today`/`tomorrow`/`yesterday`), and relative offsets (`±N[d|w|m|y]`); bad input throws; empty text → `undefined`
+* `application/x-tw-datetime` — same with `YYYY-MM-DD HH:mm`; bare `HH:mm` = today at time; missing time = `00:00`
 
 !! State tiddler default path
 

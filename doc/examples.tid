@@ -51,6 +51,18 @@ The `path` uses backtick-template substitution to interpolate the field index. E
 
 State holds a space-separated string. Each keystroke writes a JSON array of trimmed words back to `kind.fields[<f-idx>].constraints`.
 
+!! Date input with smart parser
+
+```
+<$scribe tiddler=<<currentTiddler>> field="due-date" type="application/x-tw-date">
+  <$edit-text tiddler=<<state>> field="text" tag="input" placeholder="YYYY-MM-DD, today, +7…"/>
+</$scribe>
+```
+
+State holds `YYYY-MM-DD`. The user can type ISO (`2026-05-21`), German (`21.05.2026`), shortcuts (`today`/`tomorrow`/`yesterday`), or relative offsets (`+7`, `-3d`, `+2w`, `+1m`, `+1y`). On write the value is stored as TW's UTC `YYYYMMDDHHmmsssss` format — fully compatible with `<<currentTiddler>>` views, `format:date`, etc. Bad input throws (`<$scribe>` falls through to the previous value).
+
+Datetime variant uses `type="application/x-tw-datetime"` and accepts the same inputs with optional ` HH:mm` suffix. Display becomes `YYYY-MM-DD HH:mm`.
+
 !! Cleanly un-set a property
 
 Clearing the input in either of the sub-path examples above deletes the property entirely from the field def (when the parent is an object). The field-def object survives; just the cleared property is removed.

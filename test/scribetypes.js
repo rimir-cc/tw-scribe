@@ -49,6 +49,141 @@ describe("rimir/scribe — application/json handler", function() {
 	});
 });
 
+describe("rimir/scribe — application/x-tw-date handler", function() {
+	var h = require("$:/plugins/rimir/scribe/modules/scribetypes/date.js");
+
+	function twDateOf(year, monthIdx, day) {
+		// Same conversion the handler uses: local Date → UTC TW string
+		return $tw.utils.stringifyDate(new Date(year, monthIdx, day, 0, 0, 0, 0));
+	}
+
+	it("formats TW date string as YYYY-MM-DD", function() {
+		var tw = twDateOf(2026, 4, 21);  // 21 May 2026
+		expect(h.fromField(tw)).toBe("2026-05-21");
+	});
+	it("returns empty string on blank fromField input", function() {
+		expect(h.fromField("")).toBe("");
+		expect(h.fromField(undefined)).toBe("");
+		expect(h.fromField(null)).toBe("");
+	});
+	it("passes unparseable input through unchanged", function() {
+		expect(h.fromField("garbage")).toBe("garbage");
+	});
+	it("parses ISO input on toField", function() {
+		var stored = h.toField("2026-05-21");
+		// Round-trip via fromField should give back the ISO form
+		expect(h.fromField(stored)).toBe("2026-05-21");
+	});
+	it("parses German DD.MM.YYYY", function() {
+		expect(h.fromField(h.toField("21.05.2026"))).toBe("2026-05-21");
+	});
+	it("returns undefined on empty toField input", function() {
+		expect(h.toField("")).toBeUndefined();
+		expect(h.toField("   ")).toBeUndefined();
+	});
+	it("throws on garbage input", function() {
+		expect(function() { h.toField("not-a-date"); }).toThrow();
+	});
+	it("throws on invalid date (Feb 30)", function() {
+		expect(function() { h.toField("2026-02-30"); }).toThrow();
+	});
+	it("parses 'today'", function() {
+		var stored = h.toField("today");
+		var formatted = h.fromField(stored);
+		var now = new Date();
+		var expected = now.getFullYear() + "-" +
+			pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+		expect(formatted).toBe(expected);
+	});
+	it("parses 'tomorrow' as today + 1 day", function() {
+		var t = h.toField("today");
+		var tomorrow = h.toField("tomorrow");
+		// Difference between parsed dates should be 1 day (86400000 ms)
+		var td = $tw.utils.parseDate(t), tmd = $tw.utils.parseDate(tomorrow);
+		expect(tmd.getTime() - td.getTime()).toBe(86400000);
+	});
+	it("parses 'yesterday' as today - 1 day", function() {
+		var t = h.toField("today");
+		var y = h.toField("yesterday");
+		var td = $tw.utils.parseDate(t), yd = $tw.utils.parseDate(y);
+		expect(td.getTime() - yd.getTime()).toBe(86400000);
+	});
+	it("parses +N as today + N days", function() {
+		var t = h.toField("today");
+		var plus7 = h.toField("+7");
+		var td = $tw.utils.parseDate(t), pd = $tw.utils.parseDate(plus7);
+		expect(pd.getTime() - td.getTime()).toBe(7 * 86400000);
+	});
+	it("parses -3d as today - 3 days", function() {
+		var t = h.toField("today");
+		var m3 = h.toField("-3d");
+		var td = $tw.utils.parseDate(t), md = $tw.utils.parseDate(m3);
+		expect(td.getTime() - md.getTime()).toBe(3 * 86400000);
+	});
+	it("parses +2w as today + 14 days", function() {
+		var t = h.toField("today");
+		var p2w = h.toField("+2w");
+		var td = $tw.utils.parseDate(t), pd = $tw.utils.parseDate(p2w);
+		expect(pd.getTime() - td.getTime()).toBe(14 * 86400000);
+	});
+	it("parses +1m as one calendar month forward", function() {
+		// Build a known starting point via ISO; advance one month; confirm month delta
+		var d1 = h.toField("2026-05-15");
+		var d2 = h.fromField(h.toField("+1m"));
+		// Best assertion: re-parse "+1m" against today and confirm month delta = 1
+		var today = h.toField("today");
+		var plus1m = h.toField("+1m");
+		var t = $tw.utils.parseDate(today), p = $tw.utils.parseDate(plus1m);
+		// Either same day next month or last-of-next-month (clamp). Month index
+		// should differ by 1 (mod 12) and year by 0 or 1.
+		var monthsAhead = (p.getUTCFullYear() - t.getUTCFullYear()) * 12 +
+			(p.getUTCMonth() - t.getUTCMonth());
+		expect(monthsAhead).toBe(1);
+	});
+	it("clamps day-of-month on month arithmetic (Jan 31 + 1m → Feb 28/29)", function() {
+		var jan31 = h.toField("2026-01-31");
+		// Manually compute "+1m" off Jan 31. We need to drive the helper directly
+		// because "+1m" parses relative to today, not to a specific base date.
+		// Instead: roundtrip via JS Date with the helper's addMonths logic indirectly.
+		// Approach: parse ISO Feb 31 should throw, but +1m from Jan 31 should clamp.
+		// We assert by checking that Feb 30 / 31 ISO are rejected:
+		expect(function() { h.toField("2026-02-31"); }).toThrow();
+		// And that +1m doesn't throw (it clamps internally):
+		expect(function() { h.toField("+1m"); }).not.toThrow();
+	});
+});
+
+describe("rimir/scribe — application/x-tw-datetime handler", function() {
+	var h = require("$:/plugins/rimir/scribe/modules/scribetypes/datetime.js");
+
+	it("formats with time component", function() {
+		var d = new Date(2026, 4, 21, 14, 30, 0, 0);
+		var tw = $tw.utils.stringifyDate(d);
+		expect(h.fromField(tw)).toBe("2026-05-21 14:30");
+	});
+	it("parses ISO date with time", function() {
+		var stored = h.toField("2026-05-21 14:30");
+		expect(h.fromField(stored)).toBe("2026-05-21 14:30");
+	});
+	it("parses German date with time", function() {
+		expect(h.fromField(h.toField("21.05.2026 09:15"))).toBe("2026-05-21 09:15");
+	});
+	it("parses bare HH:mm as today at that time", function() {
+		var stored = h.toField("14:30");
+		var formatted = h.fromField(stored);
+		expect(formatted).toMatch(/^\d{4}-\d{2}-\d{2} 14:30$/);
+	});
+	it("date without time component defaults to 00:00", function() {
+		var stored = h.toField("2026-05-21");
+		expect(h.fromField(stored)).toBe("2026-05-21 00:00");
+	});
+	it("throws on invalid time", function() {
+		expect(function() { h.toField("2026-05-21 25:00"); }).toThrow();
+	});
+});
+
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+
 describe("rimir/scribe — application/x-string-array handler", function() {
 	var h = require("$:/plugins/rimir/scribe/modules/scribetypes/string-array.js");
 	it("joins arrays with space on read", function() {

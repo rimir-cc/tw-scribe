@@ -10,7 +10,7 @@ Bidirectional sync between a tiddler field (or sub-path inside a JSON-encoded fi
 * ''Bidirectional sync'' — state-tiddler ↔ target field, re-prepared on external changes
 * ''Sub-path support'' — sync a value at <code>path="0,caption"</code> inside the JSON-encoded field, not just whole fields
 * ''Pluggable type handlers'' via <code>module-type: scribetype</code> modules
-* ''Three handlers ship'' — <code>text/plain</code>, <code>application/json</code>, <code>application/x-string-array</code>
+* ''Five handlers ship'' — <code>text/plain</code>, <code>application/json</code>, <code>application/x-string-array</code>, <code>application/x-tw-date</code>, <code>application/x-tw-datetime</code>
 * ''Empty-state = delete'' — clearing the state removes the sub-path key, useful for "un-set this property" semantics
 * ''Zero plugin dependencies''
 
