@@ -208,6 +208,19 @@ describe("rimir/scribe — application/x-string-array handler", function() {
 		expect(h.fromField(undefined)).toBe("");
 		expect(h.fromField(null)).toBe("");
 	});
+	it("wraps space-containing entries with [[...]] on read", function() {
+		expect(h.fromField(["Echo Fox", "Foo"])).toBe("[[Echo Fox]] Foo");
+		expect(h.fromField('["Echo Fox","Foo"]')).toBe("[[Echo Fox]] Foo");
+	});
+	it("respects [[...]] quoting on write", function() {
+		expect(h.toField("[[Echo Fox]] Foo")).toEqual(["Echo Fox", "Foo"]);
+		expect(h.toField("a [[two words]] c")).toEqual(["a", "two words", "c"]);
+	});
+	it("round-trips multi-word entries", function() {
+		var original = ["Echo Fox", "single", "Two Words"];
+		var stateText = h.fromField(original);
+		expect(h.toField(stateText)).toEqual(original);
+	});
 });
 
 describe("rimir/scribe — <$scribe> widget", function() {

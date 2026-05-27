@@ -4,5 +4,6 @@ type: text/vnd.tiddlywiki
 ! Changelog
 
 |!Version |!Date |!Changes |
+|v0.1.2 |2026-05-27 |`application/x-string-array` is now TW-list-format-aware: `fromField` formats via `$tw.utils.stringifyList` (wraps space-containing entries with `[[...]]`), `toField` parses via `$tw.utils.parseStringArray` (respects `[[...]]` quoting). On-disk JSON-array format unchanged — only the in-state representation respects quoting now, so multi-word entries (e.g. `Echo Fox`) round-trip cleanly |
 |v0.1.1 |2026-05-21 |Two new scribetypes for date round-tripping: `application/x-tw-date` (date-only) and `application/x-tw-datetime` (with `HH:mm`). Smart parser accepts ISO (`YYYY-MM-DD`), German (`DD.MM.YYYY`), shortcuts (`today`, `tomorrow`, `yesterday`), and relative offsets (`±N[d\|w\|m\|y]`). Storage format remains TW's UTC `YYYYMMDDHHmmsssss`. Month arithmetic clamps day-of-month when overflowing |
 |v0.1.0 |2026-05-20 |Initial release. `<$scribe>` widget with bidirectional sync of tiddler field (or sub-path inside JSON-encoded field) with state tiddler. Three ship-on type handlers: `text/plain`, `application/json`, `application/x-string-array`. Pattern inspired by Flibbles' `FieldTranscriberWidget` in tw5-graph; this is an independent reimplementation that adds sub-path-into-JSON syncing |
