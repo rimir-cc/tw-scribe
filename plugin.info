@@ -3,7 +3,7 @@
     "description": "Bidirectional sync between a tiddler field (or sub-path inside a JSON-encoded field) and a state tiddler — pluggable type handlers",
     "name": "scribe",
     "author": "rimir",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "core-version": ">=5.4.0",
     "source": "https://github.com/rimir-cc/tw-scribe",
     "plugin-type": "plugin",

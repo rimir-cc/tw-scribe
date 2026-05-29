@@ -180,14 +180,44 @@ exports.formatTwDate = function(value, opts) {
 };
 
 /**
- * Convert a JS Date into TW's UTC storage string. Exposed so callers
- * (e.g. palette's date kind for +/- arithmetic) can avoid round-tripping
- * through the parser.
+ * Convert a JS Date into TW's UTC storage string (17-char
+ * YYYYMMDDHHmmsssss). Used for ''datetime'' values (actual moments
+ * in time, TZ matters). Exposed so callers (e.g. palette's datetime
+ * kind for +/- arithmetic) can avoid round-tripping through the parser.
  */
 exports.toTwDate = function(date) {
     if (!date || isNaN(date.getTime())) return undefined;
     if (!$tw || !$tw.utils || !$tw.utils.stringifyDate) return undefined;
     return $tw.utils.stringifyDate(date);
+};
+
+/**
+ * Convert a JS Date into a TW date-only storage string (8-char
+ * YYYYMMDD) using LOCAL year/month/day components — no time, no UTC
+ * conversion. Used for ''date'' values (calendar dates, no TZ
+ * semantics — birthdays, due-dates, etc.).
+ *
+ * Rationale: stringifyDate produces UTC digits, so local-midnight
+ * dates get shifted backwards by the timezone offset (Berlin CET
+ * "1900-01-28 00:00" → stored as "19000127230000000"), and the digit
+ * representation crosses a day boundary. Date-only fields shouldn't
+ * carry that artifact: 28th of January is the 28th of January
+ * regardless of timezone.
+ *
+ * TW's `parseDate` and `[format:date[]]` filter both accept the
+ * 8-char form (verified) — they treat it as UTC midnight on that
+ * date, which renders correctly in CET (Jan 28 01:00 local) and any
+ * eastern timezone. WEST-of-UTC display still day-shifts but that's
+ * a pre-existing TW behaviour, not introduced here.
+ */
+exports.toTwDateOnly = function(date) {
+    if (!date || isNaN(date.getTime())) return undefined;
+    var y = date.getFullYear();
+    var m = date.getMonth() + 1;
+    var d = date.getDate();
+    return String(y) +
+        (m < 10 ? "0" + m : String(m)) +
+        (d < 10 ? "0" + d : String(d));
 };
 
 /**

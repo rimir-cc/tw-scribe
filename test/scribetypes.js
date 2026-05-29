@@ -53,13 +53,23 @@ describe("rimir/scribe — application/x-tw-date handler", function() {
 	var h = require("$:/plugins/rimir/scribe/modules/scribetypes/date.js");
 
 	function twDateOf(year, monthIdx, day) {
-		// Same conversion the handler uses: local Date → UTC TW string
+		// Legacy storage shape (pre-2026-05 versions wrote UTC 17-char).
+		// Used by tests that confirm `fromField` keeps handling the
+		// legacy shape so existing wikis self-migrate cleanly.
 		return $tw.utils.stringifyDate(new Date(year, monthIdx, day, 0, 0, 0, 0));
 	}
 
-	it("formats TW date string as YYYY-MM-DD", function() {
-		var tw = twDateOf(2026, 4, 21);  // 21 May 2026
+	it("writes 8-char YYYYMMDD on toField", function() {
+		// New storage format: local-digits date-only, no time, no UTC.
+		expect(h.toField("2026-05-21")).toBe("20260521");
+		expect(h.toField("21.05.2026")).toBe("20260521");
+	});
+	it("formats legacy 17-char UTC value as YYYY-MM-DD (back-compat)", function() {
+		var tw = twDateOf(2026, 4, 21);  // 21 May 2026 stored UTC-17
 		expect(h.fromField(tw)).toBe("2026-05-21");
+	});
+	it("formats new 8-char value as YYYY-MM-DD", function() {
+		expect(h.fromField("20260521")).toBe("2026-05-21");
 	});
 	it("returns empty string on blank fromField input", function() {
 		expect(h.fromField("")).toBe("");

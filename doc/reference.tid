@@ -29,7 +29,7 @@ type: text/vnd.tiddlywiki
 |`text/plain` |Coerces to String; undefined/null → "" |Identity |
 |`application/json` |Pretty-prints (parses then `JSON.stringify(_, null, jsonSpaces)`); falls through to raw string on parse error |Parses with `JSON.parse`; returns undefined for empty text |
 |`application/x-string-array` |Joins arrays with single space; parses JSON-array strings; returns raw string for non-arrays; empty for undefined |Splits on `\s+`; returns `[]` for empty text |
-|`application/x-tw-date` |TW UTC date string → `YYYY-MM-DD` (local); empty/unparseable pass through |Smart parser → TW UTC date string (storage-format `YYYYMMDDHHmmsssss`); empty text → undefined; bad input throws |
+|`application/x-tw-date` |Storage string → `YYYY-MM-DD` (local); accepts both new 8-char `YYYYMMDD` and legacy 17-char UTC `YYYYMMDDHHmmsssss`; empty/unparseable pass through |Smart parser → 8-char `YYYYMMDD` (local date, no time, no UTC conversion — birthdays / due-dates / calendar-only fields); empty text → undefined; bad input throws |
 |`application/x-tw-datetime` |TW UTC date string → `YYYY-MM-DD HH:mm` (local) |Same parser plus optional ` HH:mm` suffix; bare `HH:mm` = today at that time |
 
 !! Smart date-parser input shapes
